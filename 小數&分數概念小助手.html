@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>小數與分數概念拆解學習工具 (iPad/手機跨裝置版)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Fredoka', 'Noto Sans TC', 'sans-serif'],
+          },
+          colors: {
+            brandYellow: '#FFF59D',
+            brandBlue: '#E3F2FD',
+            brandOrange: '#FFE0B2',
+            brandRed: '#FF5252',
+            brandGreen: '#C8E6C9',
+            brandPurple: '#E1BEE7',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #f8fafc;
+      background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+      background-size: 18px 18px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .math-font {
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    }
+    .grid-cell {
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      touch-action: none;
+    }
+    .paper-card {
+      box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+      border: 3px solid #334155;
+    }
+
+    /* Hide Scrollbars for horizontal swipe bars */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Animations */
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      70% { transform: scale(1.12); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop-in {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes cellFill {
+      0% { fill: #FFFFFF; stroke: #38BDF8; }
+      100% { fill: #F59E0B; stroke: #D97706; }
+    }
+    .animate-cell-fill {
+      animation: cellFill 0.25s ease-out forwards;
+    }
+
+    .hover-card-bounce {
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @media (min-width: 768px) {
+      .hover-card-bounce:hover {
+        transform: translateY(-4px) scale(1.03);
+      }
+    }
+
+    /* Modal Backdrop Blur */
+    .modal-backdrop {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Cutting Line Animations for Step 2 */
+    @keyframes drawCutLine {
+      from { stroke-dashoffset: 100; opacity: 0.2; }
+      to { stroke-dashoffset: 0; opacity: 1; }
+    }
+    .animate-cut-h, .animate-cut-v {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: drawCutLine 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col font-sans pb-6">
+
+  <header class="bg-white border-b-4 border-slate-700 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex flex-col sm:flex-row justify-between items-center gap-2.5">
+      
+      <!-- Logo and App Title -->
+      <div class="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
+        <div class="flex items-center gap-2.5">
+          <div class="bg-amber-400 text-slate-900 w-10 h-10 sm:w-11 sm:h-11 rounded-2xl border-2 border-slate-800 flex items-center justify-center font-black text-xl sm:text-2xl shadow transform -rotate-3 shrink-0">
+            🧮
+          </div>
+          <div>
+            <h1 class="text-lg sm:text-2xl font-black tracking-wide text-slate-800 flex items-center gap-1.5 leading-tight">
+              小數 & 分數概念小助手
+            </h1>
+            <p class="text-[11px] sm:text-xs text-slate-500 font-medium">看圖學小數：把小數拆解成圖像與分數！(支援 iPad/手機)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable Navigation Tabs for Mobile & iPad -->
+      <nav class="flex w-full sm:w-auto overflow-x-auto no-scrollbar gap-1.5 bg-slate-100 p-1 rounded-xl border-2 border-slate-700 shrink-0">
+        <button id="tab-learn" onclick="switchTab('learn')" class="flex-1 sm:flex-none px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all whitespace-nowrap bg-amber-400 text-slate-900 shadow border-2 border-slate-800 active:scale-95">
+          <i class="fa-solid fa-puzzle-piece mr-1"></i> 概念拆解
+        </button>
+        <button id="tab-paint" onclick="switchTab('paint')" class="flex-1 sm:flex-none px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all whitespace-nowrap text-slate-600 hover:bg-white active:scale-95">
+          <i class="fa-solid fa-paintbrush mr-1"></i> 互動塗色板
+        </button>
+        <button id="tab-quiz" onclick="switchTab('quiz')" class="flex-1 sm:flex-none px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all whitespace-nowrap text-slate-600 hover:bg-white active:scale-95">
+          <i class="fa-solid fa-gamepad mr-1"></i> 觀念小測驗
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-grow max-w-6xl w-full mx-auto px-3 sm:px-4 py-4 space-y-4">
+
+    <section id="section-learn" class="space-y-4">
+      
+      <!-- Quick Selector Controls & Custom Number Input -->
+      <div class="bg-white p-3.5 sm:p-5 rounded-2xl paper-card space-y-3">
+        
+        <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+          
+          <!-- Presets Scrollable Bar -->
+          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
+            <span class="font-bold text-slate-700 text-xs sm:text-sm whitespace-nowrap shrink-0">
+              <i class="fa-solid fa-hand-pointer text-amber-500 mr-1"></i> 快速選擇小數：
+            </span>
+            <div class="flex items-center gap-1.5 shrink-0" id="preset-buttons">
+              <button onclick="setDecimal(0.1)" class="preset-btn px-2.5 py-1.5 rounded-lg bg-slate-100 font-bold text-xs sm:text-sm text-slate-700 border border-slate-300 active:scale-95">0.1</button>
+              <button onclick="setDecimal(0.3)" class="preset-btn px-2.5 py-1.5 rounded-lg bg-amber-300 font-bold text-xs sm:text-sm text-slate-900 border-2 border-slate-800 shadow-sm active:scale-95">0.3</button>
+              <button onclick="setDecimal(0.7)" class="preset-btn px-2.5 py-1.5 rounded-lg bg-slate-100 font-bold text-xs sm:text-sm text-slate-700 border border-slate-300 active:scale-95">0.7</button>
+              <span class="text-slate-300 font-bold px-0.5">|</span>
+              <button onclick="setDecimal(0.05)" class="preset-btn px-2.5 py-1.5 rounded-lg bg-slate-100 font-bold text-xs sm:text-sm text-slate-700 border border-slate-300 active:scale-95">0.05</button>
+              <button onclick="setDecimal(0.25)" class="preset-btn px-2.5 py-1.5 rounded-lg bg-slate-100 font-bold text-xs sm:text-sm text-slate-700 border border-slate-300 active:scale-95">0.25</button>
+              <button onclick="setDecimal(0.68)" class="preset-btn px-2.5 py-1.5 rounded-lg bg-slate-100 font-bold text-xs sm:text-sm text-slate-700 border border-slate-300 active:scale-95">0.68</button>
+            </div>
+          </div>
+
+          <!-- Animation Control & Mobile Optimized Custom Input -->
+          <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+            <button id="btn-play-anim" onclick="openAnimationModal()" class="flex-1 sm:flex-none px-3.5 py-2 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-slate-900 font-black rounded-xl border-2 border-slate-800 shadow transition-all active:scale-95 flex items-center justify-center gap-1.5 text-xs sm:text-sm">
+              <i class="fa-solid fa-film text-rose-700 animate-bounce"></i> 步驟動畫拆解
+            </button>
+
+            <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-xl border border-slate-300">
+              <label for="custom-input" class="text-xs font-bold text-slate-600 whitespace-nowrap">自訂：</label>
+              <input type="number" id="custom-input" step="0.01" min="0.01" max="0.99" value="0.3" inputmode="decimal"
+                     oninput="onInputChange(this.value)"
+                     class="w-16 sm:w-20 px-1.5 py-1 border-2 border-slate-700 rounded-lg font-bold text-center text-base sm:text-lg focus:ring-2 focus:ring-amber-400 outline-none bg-white">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MAIN EQUATION DISPLAY BOARD -->
+      <div class="bg-white p-4 sm:p-6 rounded-3xl paper-card space-y-4 relative overflow-hidden">
+        
+        <!-- Header Title Banner & Math Expression Stage -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-100 pb-3 gap-2">
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl sm:text-3xl font-black text-rose-500 tracking-wider">小數拆解</span>
+            <span class="text-xs sm:text-sm font-bold text-slate-500 font-mono">Decimals breakdown</span>
+          </div>
+
+          <!-- Dynamic Math Expression Bar -->
+          <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-2xl border-2 border-slate-300 font-black text-slate-800 text-xs sm:text-base w-full sm:w-auto justify-center">
+            <span>原數：<span id="expr-dec-num" class="text-amber-600">0.3</span></span>
+            <span class="text-slate-400">➔</span>
+            <span id="expr-step-1" class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-900">1</span>
+            <span id="expr-op-div" class="text-purple-600 font-bold">÷</span>
+            <span id="expr-step-2" class="px-1.5 py-0.5 rounded bg-sky-200 text-sky-900">10</span>
+            <span id="expr-op-mul" class="text-amber-600 font-bold">×</span>
+            <span id="expr-step-3" class="px-1.5 py-0.5 rounded bg-orange-200 text-orange-900">3</span>
+            <span id="expr-op-eq" class="text-slate-600">=</span>
+            <span id="expr-step-4" class="px-2 py-0.5 rounded bg-emerald-200 text-emerald-900 inline-flex items-center">
+              <span class="inline-flex flex-col items-center justify-center leading-none font-black text-xs sm:text-sm">
+                <span id="expr-frac-num" class="border-b border-emerald-900 pb-0.5 px-0.5">3</span>
+                <span id="expr-frac-den" class="pt-0.5 px-0.5">10</span>
+              </span>
+            </span>
+          </div>
+
+          <div id="precision-badge" class="bg-blue-100 text-blue-800 font-bold text-xs px-2.5 py-1 rounded-full border border-blue-300 self-start sm:self-auto">
+            十分位 (分成10等份)
+          </div>
+        </div>
+
+        <!-- Interactive Dynamic Flow Grid -->
+        <div class="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 sm:gap-3 py-2 overflow-x-auto no-scrollbar">
+          
+          <!-- 1. DECIMAL DISPLAY & ANNOTATION -->
+          <div class="flex flex-col items-center justify-center min-w-[100px] sm:min-w-[120px] my-1">
+            <div class="flex items-baseline font-black text-4xl sm:text-5xl md:text-6xl tracking-tight math-font">
+              <span id="display-integer" class="text-slate-800">0</span>
+              <span id="display-dot" class="text-rose-500 font-extrabold px-0.5 relative">.
+                <span class="absolute left-1/2 transform -translate-x-1/2 top-full pt-0.5 flex flex-col items-center pointer-events-none w-max">
+                  <span class="text-rose-500 text-sm sm:text-base font-bold">↑</span>
+                  <span class="text-[10px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 shadow-sm leading-tight">
+                    小數點
+                  </span>
+                </span>
+              </span>
+              <span id="display-fractional" class="text-amber-600">3</span>
+            </div>
+            <div class="h-8 sm:h-10"></div>
+          </div>
+
+          <div class="text-2xl sm:text-3xl font-black text-slate-700 px-0.5">=</div>
+
+          <!-- 2. STEP 1: WHOLE SHAPE -->
+          <div id="card-step-1" class="flex flex-col items-center hover-card-bounce p-2 sm:p-2.5 rounded-2xl border-2 border-transparent shrink-0">
+            <div id="top-num-1" class="mb-1 bg-amber-400 text-slate-900 border-2 border-slate-800 font-black text-base sm:text-lg w-8 h-8 rounded-full flex items-center justify-center shadow-sm">
+              1
+            </div>
+            <div class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-amber-50 rounded-2xl border-3 border-sky-400 p-1.5 flex items-center justify-center shadow-inner">
+              <div class="w-full h-full border-2 border-sky-300 rounded-lg bg-white flex items-center justify-center">
+                <span class="text-slate-600 font-black text-xs sm:text-sm">整體 1</span>
+              </div>
+            </div>
+            <div class="mt-2 bg-amber-100 border border-amber-300 text-slate-800 font-bold text-[11px] sm:text-xs px-2 py-1 rounded-xl text-center w-full shadow-sm">
+              <span class="text-amber-900 font-black">1個</span> <span class="text-rose-600 font-black">完整</span> 圖形
+            </div>
+          </div>
+
+          <div class="text-2xl sm:text-3xl font-black text-purple-600 px-0.5">÷</div>
+
+          <!-- 3. STEP 2: DIVIDED GRID -->
+          <div id="card-step-2" class="flex flex-col items-center hover-card-bounce p-2 sm:p-2.5 rounded-2xl border-2 border-transparent shrink-0">
+            <div id="top-num-total" class="mb-1 bg-sky-400 text-slate-900 border-2 border-slate-800 font-black text-base sm:text-lg min-w-[2rem] h-8 px-1.5 rounded-full flex items-center justify-center shadow-sm">
+              10
+            </div>
+            <div class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-blue-50 rounded-2xl border-3 border-sky-400 p-1.5 flex items-center justify-center relative shadow-inner">
+              <svg id="svg-empty-grid" viewBox="0 0 100 100" class="w-full h-full text-sky-500 stroke-current stroke-[2] fill-none"></svg>
+            </div>
+            <div class="mt-2 bg-sky-100 border border-sky-300 text-slate-800 font-bold text-[11px] sm:text-xs px-1.5 py-1 rounded-xl text-center w-full shadow-sm">
+              <span class="text-rose-600 font-black">平分</span> <span id="label-total-parts" class="text-rose-600 font-black">10</span>等份
+            </div>
+          </div>
+
+          <div class="text-2xl sm:text-3xl font-black text-amber-600 px-0.5">×</div>
+
+          <!-- 4. STEP 3: SHADED GRID -->
+          <div id="card-step-3" class="flex flex-col items-center hover-card-bounce p-2 sm:p-2.5 rounded-2xl border-2 border-transparent shrink-0">
+            <div id="top-num-filled" class="mb-1 bg-orange-400 text-slate-900 border-2 border-slate-800 font-black text-base sm:text-lg min-w-[2rem] h-8 px-1.5 rounded-full flex items-center justify-center shadow-sm">
+              3
+            </div>
+            <div class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-blue-50 rounded-2xl border-3 border-sky-400 p-1.5 flex items-center justify-center relative shadow-inner">
+              <svg id="svg-filled-grid" viewBox="0 0 100 100" class="w-full h-full"></svg>
+            </div>
+            <div class="mt-2 bg-orange-100 border border-orange-300 text-slate-800 font-bold text-[11px] sm:text-xs px-1.5 py-1 rounded-xl text-center w-full shadow-sm">
+              <span class="text-rose-600 font-black">佔有</span> 的份數
+            </div>
+          </div>
+
+          <div class="text-2xl sm:text-3xl font-black text-slate-700 px-0.5">=</div>
+
+          <!-- 5. FRACTION RESULT (Fixed border-b-2 for fraction line) -->
+          <div id="card-step-4" class="flex flex-col items-center justify-center min-w-[80px] p-2 sm:p-2.5 rounded-2xl border-2 border-transparent shrink-0">
+            <div class="flex flex-col items-center justify-center math-font font-black text-2xl sm:text-3xl md:text-4xl">
+              <span id="fraction-numerator" class="text-amber-600 border-b-2 border-slate-800 px-2 pb-0.5 w-full text-center">
+                3
+              </span>
+              <span id="fraction-denominator" class="text-slate-800 pt-0.5 px-2 w-full text-center flex items-center justify-center">
+                1<span id="denominator-zero" class="text-rose-500">0</span>
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Concept Explanation Box -->
+        <div class="bg-amber-50 rounded-2xl p-3 sm:p-4 border-2 border-amber-200 flex items-start gap-2.5">
+          <div class="bg-amber-400 text-slate-900 rounded-full w-7 h-7 flex items-center justify-center font-bold shrink-0 mt-0.5 text-xs sm:text-base">
+            <i class="fa-solid fa-lightbulb"></i>
+          </div>
+          <div class="text-xs sm:text-sm text-slate-700 space-y-0.5">
+            <p class="font-bold text-slate-900 text-xs sm:text-base">觀念重點拆解：</p>
+            <p id="explanation-text" class="leading-relaxed"></p>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <section id="section-paint" class="space-y-4 hidden">
+      <div class="bg-white p-4 sm:p-6 rounded-3xl paper-card space-y-4">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b-2 border-slate-100 pb-3">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-paintbrush text-amber-500"></i> 自由塗色體驗 (支援觸控與拖曳)
+            </h2>
+            <p class="text-xs text-slate-500">在 iPad 或手機上用手指滑動塗色，觀察小數與分數變化！</p>
+          </div>
+          
+          <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-300 w-full sm:w-auto justify-center">
+            <button id="paint-mode-10" onclick="setPaintGridSize(10)" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg font-bold text-xs bg-amber-400 text-slate-900 border border-slate-700 shadow-sm active:scale-95">
+              10 格陣列 (十分位)
+            </button>
+            <button id="paint-mode-100" onclick="setPaintGridSize(100)" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg font-bold text-xs text-slate-600 hover:bg-white active:scale-95">
+              100 格網格 (百分位)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          
+          <!-- Grid Canvas Frame -->
+          <div class="flex flex-col items-center justify-center p-3 sm:p-5 bg-slate-50 rounded-2xl border-2 border-slate-200">
+            
+            <div id="interactive-grid-container" 
+                 class="w-60 h-60 sm:w-72 sm:h-72 bg-white rounded-xl border-4 border-slate-700 p-2 shadow-md touch-none select-none">
+            </div>
+            
+            <div class="mt-4 flex gap-3 w-full justify-center">
+              <button onclick="clearPaintGrid()" class="px-4 py-2 bg-rose-100 text-rose-700 hover:bg-rose-200 font-bold rounded-xl border border-rose-300 text-xs sm:text-sm active:scale-95">
+                <i class="fa-solid fa-trash-can mr-1"></i> 全部清空
+              </button>
+              <button onclick="fillPaintGridAll()" class="px-4 py-2 bg-sky-100 text-sky-700 hover:bg-sky-200 font-bold rounded-xl border border-sky-300 text-xs sm:text-sm active:scale-95">
+                <i class="fa-solid fa-fill-drip mr-1"></i> 全部填滿 (1.0)
+              </button>
+            </div>
+          </div>
+
+          <!-- Stats Side Panel -->
+          <div class="bg-amber-50 p-4 sm:p-5 rounded-2xl border-2 border-amber-300 space-y-4">
+            <h3 class="font-bold text-slate-800 text-sm sm:text-base border-b border-amber-200 pb-2">當前塗色統計結果</h3>
+
+            <div class="grid grid-cols-2 gap-3 text-center">
+              <div class="bg-white p-3 rounded-xl border border-amber-200 shadow-sm">
+                <span class="text-[11px] text-slate-500 font-bold block mb-1">塗色格數 / 總格數</span>
+                <span id="paint-stat-count" class="text-2xl sm:text-3xl font-black text-amber-600 font-mono">0 / 10</span>
+              </div>
+              <div class="bg-white p-3 rounded-xl border border-amber-200 shadow-sm">
+                <span class="text-[11px] text-slate-500 font-bold block mb-1">對應小數</span>
+                <span id="paint-stat-decimal" class="text-2xl sm:text-3xl font-black text-rose-500 font-mono">0.0</span>
+              </div>
+            </div>
+
+            <div class="bg-white p-3 sm:p-4 rounded-xl border border-amber-200 shadow-sm flex items-center justify-around">
+              <div class="flex flex-col items-center">
+                <span class="text-[11px] text-slate-500 font-bold block mb-1">對應分數</span>
+                <div id="paint-stat-fraction" class="min-h-[42px] flex items-center justify-center"></div>
+              </div>
+              <div class="text-slate-300 text-lg font-bold">=</div>
+              <div class="flex flex-col items-center">
+                <span class="text-[11px] text-slate-500 font-bold block mb-1">最簡分數</span>
+                <div id="paint-stat-simplified" class="min-h-[42px] flex items-center justify-center"></div>
+              </div>
+            </div>
+
+            <div class="p-3 bg-white/80 rounded-xl text-xs text-slate-600 flex items-center gap-1.5 flex-wrap">
+              <i class="fa-solid fa-circle-info text-amber-500"></i> 
+              <span>試試塗滿 <span class="font-bold text-slate-800">5 格</span>（十分位）或<span class="font-bold text-slate-800">50 格</span>（百分位），看看小數是否等於 <span class="font-bold text-amber-600">0.5</span> 並且最簡分數是</span><span class="inline-flex flex-col items-center justify-center leading-none font-black text-xs text-emerald-700 mx-0.5">
+                <span class="border-b-2 border-emerald-700 pb-0.5 px-1">1</span>
+                <span class="pt-0.5 px-1">2</span>
+              </span>！
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="section-quiz" class="space-y-4 hidden">
+      <div class="bg-white p-4 sm:p-6 rounded-3xl paper-card space-y-4">
+        <div class="flex justify-between items-center border-b-2 border-slate-100 pb-3">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-trophy text-amber-500"></i> 小數與分數觀念小挑戰
+            </h2>
+            <p class="text-xs text-slate-500">看圖選出正確的小數或分數，鞏固學習印象！</p>
+          </div>
+          <div class="bg-purple-100 text-purple-800 font-bold text-xs px-3 py-1 rounded-xl border border-purple-300 shrink-0">
+            得分：<span id="quiz-score" class="text-sm sm:text-base font-black">0</span>
+          </div>
+        </div>
+
+        <div id="quiz-box" class="max-w-xl mx-auto space-y-4 bg-slate-50 p-4 sm:p-6 rounded-2xl border-2 border-slate-200">
+          <div class="text-center space-y-1.5">
+            <span class="bg-amber-400 text-slate-900 font-bold text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full uppercase tracking-wider">題目</span>
+            <h3 id="quiz-question-text" class="text-base sm:text-lg font-bold text-slate-800">請看下圖，塗色部分代表的小數是多少？</h3>
+          </div>
+
+          <div class="flex justify-center my-2">
+            <div class="w-36 h-36 sm:w-44 sm:h-44 bg-white rounded-2xl border-4 border-sky-400 p-2.5 flex items-center justify-center shadow-md">
+              <svg id="quiz-svg-display" viewBox="0 0 100 100" class="w-full h-full"></svg>
+            </div>
+          </div>
+
+          <div id="quiz-options-container" class="grid grid-cols-2 gap-2.5"></div>
+          <div id="quiz-feedback" class="hidden p-3 rounded-xl text-center font-bold text-xs sm:text-sm"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="animation-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop hidden">
+    <div class="bg-white w-full max-w-3xl rounded-3xl border-4 border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-pop-in">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400 px-4 sm:px-6 py-3 border-b-4 border-slate-800 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="bg-white text-slate-900 w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-2 border-slate-800 flex items-center justify-center font-black text-lg shadow shrink-0">
+            <i class="fa-solid fa-film text-amber-600"></i>
+          </div>
+          <div>
+            <h2 class="text-base sm:text-xl font-black text-slate-900 tracking-wide">
+              分拆動畫：<span id="modal-title-dec" class="text-rose-600 text-xl sm:text-2xl font-mono">0.3</span>
+            </h2>
+            <p class="text-[11px] sm:text-xs text-slate-700 font-medium">一步步觀看分割與填色！</p>
+          </div>
+        </div>
+
+        <button onclick="closeAnimationModal()" class="w-9 h-9 sm:w-10 sm:h-10 bg-white hover:bg-rose-100 text-slate-800 hover:text-rose-600 font-bold rounded-xl border-2 border-slate-800 flex items-center justify-center transition-all shadow shrink-0 active:scale-95">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-3 sm:p-6 overflow-y-auto space-y-4 flex-grow bg-slate-50">
+        
+        <!-- Step Progress Grid Bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button id="modal-step-btn-1" onclick="jumpToModalStep(1)" class="p-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-xs text-slate-600 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-black text-[10px] shrink-0">1</span>
+            <span>1.整體 1</span>
+          </button>
+          <button id="modal-step-btn-2" onclick="jumpToModalStep(2)" class="p-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-xs text-slate-600 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-black text-[10px] shrink-0">2</span>
+            <span>2.平均分割</span>
+          </button>
+          <button id="modal-step-btn-3" onclick="jumpToModalStep(3)" class="p-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-xs text-slate-600 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-black text-[10px] shrink-0">3</span>
+            <span>3.著色填滿</span>
+          </button>
+          <button id="modal-step-btn-4" onclick="jumpToModalStep(4)" class="p-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-xs text-slate-600 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-black text-[10px] shrink-0">4</span>
+            <span>4.轉換分數</span>
+          </button>
+        </div>
+
+        <!-- Animation Visual Stage -->
+        <div class="bg-white border-3 sm:border-4 border-slate-700 rounded-2xl sm:rounded-3xl p-4 shadow-inner flex flex-col sm:flex-row items-center justify-around gap-4 min-h-[220px]">
+          
+          <div class="w-40 h-40 sm:w-48 sm:h-48 md:w-52 md:h-52 bg-sky-50 rounded-2xl border-3 border-sky-400 p-2.5 flex items-center justify-center shadow-md shrink-0 relative">
+            <div id="modal-graphic-wrapper" class="w-full h-full flex items-center justify-center"></div>
+          </div>
+
+          <div class="flex-1 space-y-2.5 text-center sm:text-left">
+            <div id="modal-badge-tag" class="inline-block px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900 font-extrabold text-[11px] sm:text-xs tracking-wider border border-slate-800">
+              步驟 1 / 4
+            </div>
+
+            <h3 id="modal-step-title" class="text-lg sm:text-2xl font-black text-slate-800 leading-tight">
+              準備 1 個完整圖形
+            </h3>
+
+            <p id="modal-step-desc" class="text-slate-600 font-bold text-xs sm:text-sm leading-relaxed">
+              首先，我們將小數理解為從「整體 1」出發。
+            </p>
+
+            <div class="bg-slate-100 p-2.5 sm:p-3.5 rounded-xl border-2 border-slate-200 font-black text-slate-800 flex items-center justify-center sm:justify-start gap-2 text-sm sm:text-base">
+              <span>當前運算：</span>
+              <span id="modal-formula-display" class="text-amber-600 font-mono text-base sm:text-xl">0.3</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Modal Footer Controls -->
+      <div class="bg-white border-t-3 border-slate-800 px-4 py-3 flex items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-start">
+          <button onclick="prevModalStep()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl border border-slate-700 text-xs flex items-center gap-1 active:scale-95">
+            <i class="fa-solid fa-backward"></i> 上一步
+          </button>
+          <button id="btn-modal-play" onclick="toggleModalAutoplay()" class="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black rounded-xl border-2 border-slate-800 text-xs flex items-center gap-1.5 shadow active:scale-95">
+            <i class="fa-solid fa-play"></i> 自動播放
+          </button>
+          <button onclick="nextModalStep()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl border border-slate-700 text-xs flex items-center gap-1 active:scale-95">
+            下一步 <i class="fa-solid fa-forward"></i>
+          </button>
+        </div>
+
+        <button onclick="closeAnimationModal()" class="px-3.5 py-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl border border-slate-800 text-xs shadow hidden sm:block active:scale-95">
+          關閉
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentDecimal = 0.3;
+    let paintGridTotal = 10;
+    let paintGridState = Array(10).fill(false);
+    let isPainting = false;
+    let paintTargetMode = true;
+    
+    let quizScore = 0;
+    let currentQuizAnswer = null;
+
+    let currentModalStep = 1;
+    let isModalAutoplay = false;
+    let modalTimer = null;
+
+    function getVerticalFractionHTML(n, d, extraClasses = '') {
+      return `<span class="inline-flex flex-col items-center justify-center leading-none font-black mx-1 align-middle ${extraClasses}">
+        <span class="border-b-2 border-current px-0.5 pb-0.5 text-center">${n}</span>
+        <span class="pt-0.5 text-center">${d}</span>
+      </span>`;
+    }
+
+    function switchTab(tabName) {
+      const tabs = ['learn', 'paint', 'quiz'];
+      tabs.forEach(t => {
+        const sec = document.getElementById(`section-${t}`);
+        const btn = document.getElementById(`tab-${t}`);
+        if (sec) sec.classList.add('hidden');
+        if (btn) {
+          btn.className = "flex-1 sm:flex-none px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all whitespace-nowrap text-slate-600 hover:bg-white active:scale-95";
+        }
+      });
+
+      const targetSec = document.getElementById(`section-${tabName}`);
+      const targetBtn = document.getElementById(`tab-${tabName}`);
+      if (targetSec) targetSec.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.className = "flex-1 sm:flex-none px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all whitespace-nowrap bg-amber-400 text-slate-900 shadow border-2 border-slate-800 active:scale-95";
+      }
+    }
+
+    window.onload = function () {
+      renderDecimalBreakdown(0.3);
+      initPaintGrid(10);
+      generateNewQuiz();
+    };
+
+    function setDecimal(val) {
+      document.getElementById('custom-input').value = val;
+      renderDecimalBreakdown(val);
+      updatePresetButtonsHighlight(val);
+    }
+
+    function updatePresetButtonsHighlight(val) {
+      const btns = document.querySelectorAll('.preset-btn');
+      btns.forEach(btn => {
+        const textVal = parseFloat(btn.innerText);
+        if (textVal === val) {
+          btn.className = "preset-btn px-2.5 py-1.5 rounded-lg bg-amber-300 font-bold text-xs sm:text-sm text-slate-900 border-2 border-slate-800 shadow-sm active:scale-95";
+        } else {
+          btn.className = "preset-btn px-2.5 py-1.5 rounded-lg bg-slate-100 font-bold text-xs sm:text-sm text-slate-700 border border-slate-300 active:scale-95";
+        }
+      });
+    }
+
+    function onInputChange(val) {
+      let num = parseFloat(val);
+      if (isNaN(num) || num <= 0) num = 0.01;
+      if (num >= 1) num = 0.99;
+      renderDecimalBreakdown(num);
+      updatePresetButtonsHighlight(num);
+    }
+
+    function renderDecimalBreakdown(num) {
+      currentDecimal = Math.round(num * 100) / 100;
+
+      const isCent = (Math.round(currentDecimal * 100) % 10 !== 0) || currentDecimal < 0.1;
+      const totalParts = isCent ? 100 : 10;
+      const occupiedParts = Math.round(currentDecimal * totalParts);
+
+      document.getElementById('top-num-1').innerText = "1";
+      document.getElementById('top-num-total').innerText = totalParts;
+      document.getElementById('top-num-filled').innerText = occupiedParts;
+
+      document.getElementById('expr-dec-num').innerText = currentDecimal;
+      document.getElementById('expr-step-1').innerText = "1";
+      document.getElementById('expr-step-2').innerText = totalParts;
+      document.getElementById('expr-step-3').innerText = occupiedParts;
+      document.getElementById('expr-frac-num').innerText = occupiedParts;
+      document.getElementById('expr-frac-den').innerText = totalParts;
+
+      const badge = document.getElementById('precision-badge');
+      if (isCent) {
+        badge.innerText = "百分位 (分成100等份)";
+        badge.className = "bg-purple-100 text-purple-800 font-bold text-xs px-2.5 py-1 rounded-full border border-purple-300";
+      } else {
+        badge.innerText = "十分位 (分成10等份)";
+        badge.className = "bg-blue-100 text-blue-800 font-bold text-xs px-2.5 py-1 rounded-full border border-blue-300";
+      }
+
+      const strVal = currentDecimal.toFixed(isCent ? 2 : 1);
+      const parts = strVal.split('.');
+      document.getElementById('display-integer').innerText = parts[0];
+      document.getElementById('display-dot').childNodes[0].nodeValue = '.';
+      document.getElementById('display-fractional').innerText = parts[1];
+
+      document.getElementById('label-total-parts').innerText = totalParts;
+
+      renderSvgGrid('svg-empty-grid', totalParts, 0, false);
+      renderSvgGrid('svg-filled-grid', totalParts, occupiedParts, false);
+
+      document.getElementById('fraction-numerator').innerText = occupiedParts;
+      const denomEl = document.getElementById('fraction-denominator');
+      denomEl.innerHTML = isCent ? `1<span class="text-rose-500">00</span>` : `1<span class="text-rose-500">0</span>`;
+
+      const explText = document.getElementById('explanation-text');
+      if (isCent) {
+        explText.innerHTML = `將 <b>1</b> 個完整圖形平分成 <b>${totalParts}</b> 等份，每一格代表 <b>${1/totalParts}</b> 。著色 <b>${occupiedParts}</b> 格就等於小數  <b>${1/totalParts}</b> +  <b>${1/totalParts}</b> +  <b>${1/totalParts}</b> = <b>${currentDecimal}</b>，也就是分數 ${getVerticalFractionHTML(occupiedParts, totalParts, 'text-amber-800 font-black')}。`;
+      } else {
+        explText.innerHTML = `將 <b>1</b> 個完整圖形平分成 <b>${totalParts}</b> 等份，每一格代表 <b>${1/totalParts}</b> 。著色 <b>${occupiedParts}</b> 格就等於小數  <b>${1/totalParts}</b> +  <b>${1/totalParts}</b> +  <b>${1/totalParts}</b> = <b>${currentDecimal}</b>，也就是分數 ${getVerticalFractionHTML(occupiedParts, totalParts, 'text-amber-800 font-black')}。`;
+      }
+    }
+
+    function renderSvgGrid(svgId, totalParts, filledParts, animateFill = false) {
+      const svg = document.getElementById(svgId);
+      if (!svg) return;
+      svg.innerHTML = '';
+
+      if (totalParts === 10) {
+        const cols = 5, rows = 2, gap = 2;
+        const width = (100 - (cols + 1) * gap) / cols;
+        const height = (100 - (rows + 1) * gap) / rows;
+        let filledIndex = 0;
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const x = gap + c * (width + gap);
+            const y = gap + r * (height + gap);
+            const isFilled = filledIndex < filledParts;
+
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x);
+            rect.setAttribute('y', y);
+            rect.setAttribute('width', width);
+            rect.setAttribute('height', height);
+            rect.setAttribute('rx', '2');
+
+            if (isFilled) {
+              rect.setAttribute('fill', '#F59E0B');
+              rect.setAttribute('stroke', '#D97706');
+              rect.setAttribute('stroke-width', '2');
+              if (animateFill) {
+                rect.classList.add('animate-cell-fill');
+                rect.style.animationDelay = `${filledIndex * 0.1}s`;
+              }
+            } else {
+              rect.setAttribute('fill', '#FFFFFF');
+              rect.setAttribute('stroke', '#38BDF8');
+              rect.setAttribute('stroke-width', '2');
+            }
+
+            svg.appendChild(rect);
+            filledIndex++;
+          }
+        }
+      } else {
+        const cols = 10, rows = 10, gap = 1;
+        const width = (100 - (cols + 1) * gap) / cols;
+        const height = (100 - (rows + 1) * gap) / rows;
+        let filledIndex = 0;
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const x = gap + c * (width + gap);
+            const y = gap + r * (height + gap);
+            const isFilled = filledIndex < filledParts;
+
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x);
+            rect.setAttribute('y', y);
+            rect.setAttribute('width', width);
+            rect.setAttribute('height', height);
+
+            if (isFilled) {
+              rect.setAttribute('fill', '#F59E0B');
+              rect.setAttribute('stroke', '#D97706');
+              rect.setAttribute('stroke-width', '0.5');
+              if (animateFill) {
+                rect.classList.add('animate-cell-fill');
+                rect.style.animationDelay = `${Math.min(filledIndex * 0.015, 0.6)}s`;
+              }
+            } else {
+              rect.setAttribute('fill', '#FFFFFF');
+              rect.setAttribute('stroke', '#BAE6FD');
+              rect.setAttribute('stroke-width', '0.5');
+            }
+
+            svg.appendChild(rect);
+            filledIndex++;
+          }
+        }
+      }
+    }
+
+    function renderStep2CuttingGrid(svgId, totalParts) {
+      const svg = document.getElementById(svgId);
+      if (!svg) return;
+      svg.innerHTML = '';
+
+      const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bgRect.setAttribute('x', '2');
+      bgRect.setAttribute('y', '2');
+      bgRect.setAttribute('width', '96');
+      bgRect.setAttribute('height', '96');
+      bgRect.setAttribute('rx', '4');
+      bgRect.setAttribute('fill', '#F0F9FF');
+      bgRect.setAttribute('stroke', '#0284C7');
+      bgRect.setAttribute('stroke-width', '2');
+      svg.appendChild(bgRect);
+
+      if (totalParts === 10) {
+        const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        hLine.setAttribute('x1', '2');
+        hLine.setAttribute('y1', '50');
+        hLine.setAttribute('x2', '98');
+        hLine.setAttribute('y2', '50');
+        hLine.setAttribute('stroke', '#0284C7');
+        hLine.setAttribute('stroke-width', '3');
+        hLine.classList.add('animate-cut-h');
+        hLine.style.animationDelay = '0.1s';
+        svg.appendChild(hLine);
+
+        const vPositions = [21.2, 40.4, 59.6, 78.8];
+        vPositions.forEach((xPos, idx) => {
+          const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          vLine.setAttribute('x1', xPos);
+          vLine.setAttribute('y1', '2');
+          vLine.setAttribute('x2', xPos);
+          vLine.setAttribute('y2', '98');
+          vLine.setAttribute('stroke', '#0284C7');
+          vLine.setAttribute('stroke-width', '2.5');
+          vLine.classList.add('animate-cut-v');
+          vLine.style.animationDelay = `${0.5 + idx * 0.12}s`;
+          svg.appendChild(vLine);
+        });
+      } else {
+        for (let i = 1; i < 10; i++) {
+          const y = i * 10;
+          const hLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          hLine.setAttribute('x1', '2');
+          hLine.setAttribute('y1', y);
+          hLine.setAttribute('x2', '98');
+          hLine.setAttribute('y2', y);
+          hLine.setAttribute('stroke', '#0284C7');
+          hLine.setAttribute('stroke-width', '1.5');
+          hLine.classList.add('animate-cut-h');
+          hLine.style.animationDelay = `${0.04 * i}s`;
+          svg.appendChild(hLine);
+        }
+        for (let j = 1; j < 10; j++) {
+          const x = j * 10;
+          const vLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          vLine.setAttribute('x1', x);
+          vLine.setAttribute('y1', '2');
+          vLine.setAttribute('x2', x);
+          vLine.setAttribute('y2', '98');
+          vLine.setAttribute('stroke', '#0284C7');
+          vLine.setAttribute('stroke-width', '1.5');
+          vLine.classList.add('animate-cut-v');
+          vLine.style.animationDelay = `${0.4 + 0.04 * j}s`;
+          svg.appendChild(vLine);
+        }
+      }
+    }
+
+    function openAnimationModal() {
+      document.getElementById('animation-modal').classList.remove('hidden');
+      document.getElementById('modal-title-dec').innerText = currentDecimal;
+      currentModalStep = 1;
+      updateModalStepView();
+      toggleModalAutoplay(true);
+    }
+
+    function closeAnimationModal() {
+      document.getElementById('animation-modal').classList.add('hidden');
+      stopModalAutoplay();
+    }
+
+    function jumpToModalStep(step) {
+      currentModalStep = step;
+      stopModalAutoplay();
+      updateModalStepView();
+    }
+
+    function nextModalStep() {
+      currentModalStep = currentModalStep >= 4 ? 1 : currentModalStep + 1;
+      updateModalStepView();
+    }
+
+    function prevModalStep() {
+      currentModalStep = currentModalStep <= 1 ? 4 : currentModalStep - 1;
+      updateModalStepView();
+    }
+
+    function toggleModalAutoplay(forceStart = false) {
+      if (isModalAutoplay && !forceStart) {
+        stopModalAutoplay();
+      } else {
+        isModalAutoplay = true;
+        const btn = document.getElementById('btn-modal-play');
+        btn.innerHTML = `<i class="fa-solid fa-pause"></i> 暫停`;
+        btn.className = "px-3.5 py-1.5 bg-rose-400 hover:bg-rose-500 text-slate-900 font-black rounded-xl border-2 border-slate-800 text-xs flex items-center gap-1.5 shadow active:scale-95";
+
+        if (modalTimer) clearInterval(modalTimer);
+        modalTimer = setInterval(() => {
+          nextModalStep();
+        }, 2200);
+      }
+    }
+
+    function stopModalAutoplay() {
+      isModalAutoplay = false;
+      if (modalTimer) clearInterval(modalTimer);
+      modalTimer = null;
+      const btn = document.getElementById('btn-modal-play');
+      if (btn) {
+        btn.innerHTML = `<i class="fa-solid fa-play"></i> 自動播放`;
+        btn.className = "px-3.5 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black rounded-xl border-2 border-slate-800 text-xs flex items-center gap-1.5 shadow active:scale-95";
+      }
+    }
+
+    function updateModalStepView() {
+      const isCent = (Math.round(currentDecimal * 100) % 10 !== 0) || currentDecimal < 0.1;
+      const totalParts = isCent ? 100 : 10;
+      const occupiedParts = Math.round(currentDecimal * totalParts);
+
+      [1, 2, 3, 4].forEach(s => {
+        const btn = document.getElementById(`modal-step-btn-${s}`);
+        if (s === currentModalStep) {
+          btn.className = "p-2 rounded-xl border-2 border-slate-800 bg-amber-300 font-bold text-xs text-slate-900 shadow transform scale-105 flex items-center justify-center gap-1.5";
+          btn.children[0].className = "w-5 h-5 rounded-full bg-slate-900 text-amber-300 flex items-center justify-center font-black text-[10px] shrink-0";
+        } else {
+          btn.className = "p-2 rounded-xl border-2 border-slate-300 bg-white font-bold text-xs text-slate-600 transition-all flex items-center justify-center gap-1.5 opacity-70";
+          btn.children[0].className = "w-5 h-5 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-black text-[10px] shrink-0";
+        }
+      });
+
+      const wrapper = document.getElementById('modal-graphic-wrapper');
+      const badgeTag = document.getElementById('modal-badge-tag');
+      const stepTitle = document.getElementById('modal-step-title');
+      const stepDesc = document.getElementById('modal-step-desc');
+      const formulaDisp = document.getElementById('modal-formula-display');
+
+      badgeTag.innerText = `步驟 ${currentModalStep} / 4`;
+
+      if (currentModalStep === 1) {
+        stepTitle.innerText = "步驟 1：準備整體 1";
+        stepDesc.innerText = `將小數 ${currentDecimal} 視為從 1 個完整的圖形開始。`;
+        formulaDisp.innerHTML = `<span class="text-amber-600">1</span> 個完整單位`;
+        wrapper.innerHTML = `
+          <div class="w-full h-full border-4 border-amber-400 bg-amber-100 rounded-2xl flex items-center justify-center shadow-inner animate-pop-in">
+            <span class="font-black text-amber-800 text-xl sm:text-2xl">整體 1</span>
+          </div>`;
+      } else if (currentModalStep === 2) {
+        stepTitle.innerText = `步驟 2：平均分成 ${totalParts} 等份 (÷ ${totalParts})`;
+        stepDesc.innerText = `將「整體 1」平均切割成 ${totalParts} 個小格。`;
+        formulaDisp.innerHTML = `1 ÷ <span class="text-purple-600">${totalParts}</span> = 每一格代表 ${1/totalParts}`;
+        wrapper.innerHTML = `<svg id="modal-svg" viewBox="0 0 100 100" class="w-full h-full animate-pop-in"></svg>`;
+        renderStep2CuttingGrid('modal-svg', totalParts);
+      } else if (currentModalStep === 3) {
+        stepTitle.innerText = `步驟 3：在切割好的圖上逐步著色 ${occupiedParts} 格`;
+        stepDesc.innerText = `直接在平分好的網格上，依序一格一格填入橘黃色。`;
+        formulaDisp.innerHTML = `(${1/totalParts}) × <span class="text-orange-600">${occupiedParts}</span> = <span class="text-amber-600">${currentDecimal}</span>`;
+        wrapper.innerHTML = `<svg id="modal-svg" viewBox="0 0 100 100" class="w-full h-full"></svg>`;
+        renderSvgGrid('modal-svg', totalParts, occupiedParts, true);
+      } else if (currentModalStep === 4) {
+        stepTitle.innerHTML = `<div class="flex items-center justify-center sm:justify-start gap-1 flex-wrap"><span>步驟 4：轉換為分數</span> <span>(= ${getVerticalFractionHTML(occupiedParts, totalParts, 'text-xl text-emerald-600')})</span></div>`;
+        stepDesc.innerText = `「總份數」放分母，「著色份數」放分子！`;
+        formulaDisp.innerHTML = `<span class="text-amber-600">${currentDecimal}</span> = ${getVerticalFractionHTML(occupiedParts, totalParts, 'text-xl text-slate-900')}`;
+        wrapper.innerHTML = `
+          <div class="relative w-full h-full flex items-center justify-center">
+            <svg id="modal-svg" viewBox="0 0 100 100" class="w-full h-full opacity-50"></svg>
+            <div class="absolute inset-0 m-auto w-4/5 h-4/5 bg-white/90 backdrop-blur-sm rounded-2xl border-4 border-emerald-500 shadow-xl flex items-center justify-center animate-pop-in">
+              ${getVerticalFractionHTML(occupiedParts, totalParts, 'text-4xl sm:text-5xl text-emerald-600 font-black')}
+            </div>
+          </div>`;
+        renderSvgGrid('modal-svg', totalParts, occupiedParts, false);
+      }
+    }
+
+    function setPaintGridSize(size) {
+      paintGridTotal = size;
+      paintGridState = Array(size).fill(false);
+      const btn10 = document.getElementById('paint-mode-10');
+      const btn100 = document.getElementById('paint-mode-100');
+      if (size === 10) {
+        btn10.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg font-bold text-xs bg-amber-400 text-slate-900 border border-slate-700 shadow-sm active:scale-95";
+        btn100.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg font-bold text-xs text-slate-600 hover:bg-white active:scale-95";
+      } else {
+        btn100.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg font-bold text-xs bg-amber-400 text-slate-900 border border-slate-700 shadow-sm active:scale-95";
+        btn10.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg font-bold text-xs text-slate-600 hover:bg-white active:scale-95";
+      }
+      initPaintGrid(size);
+    }
+
+    function initPaintGrid(size) {
+      const container = document.getElementById('interactive-grid-container');
+      container.innerHTML = '';
+      container.className = size === 10 
+        ? "w-60 h-60 sm:w-72 sm:h-72 bg-white rounded-xl border-4 border-slate-700 p-2 shadow-md grid grid-cols-5 grid-rows-2 gap-2 touch-none select-none"
+        : "w-60 h-60 sm:w-72 sm:h-72 bg-white rounded-xl border-4 border-slate-700 p-1.5 shadow-md grid grid-cols-10 grid-rows-10 gap-0.5 touch-none select-none";
+
+      for (let i = 0; i < size; i++) {
+        const cell = document.createElement('div');
+        cell.dataset.index = i;
+        cell.className = "grid-cell cursor-pointer bg-slate-100 border border-slate-300 rounded-md transition-all flex items-center justify-center font-bold text-xs select-none touch-none";
+        container.appendChild(cell);
+      }
+
+      container.onpointerdown = (e) => {
+        e.preventDefault();
+        isPainting = true;
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        if (target && target.dataset && target.dataset.index !== undefined) {
+          const idx = parseInt(target.dataset.index);
+          paintTargetMode = !paintGridState[idx];
+          applyCellPaint(idx, paintTargetMode);
+        }
+      };
+
+      container.onpointermove = (e) => {
+        if (!isPainting) return;
+        e.preventDefault();
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        if (target && target.dataset && target.dataset.index !== undefined) {
+          const idx = parseInt(target.dataset.index);
+          applyCellPaint(idx, paintTargetMode);
+        }
+      };
+
+      window.onpointerup = () => { isPainting = false; };
+      window.onpointercancel = () => { isPainting = false; };
+
+      updatePaintStats();
+    }
+
+    function applyCellPaint(index, targetState) {
+      if (paintGridState[index] === targetState) return;
+      paintGridState[index] = targetState;
+      const cell = document.getElementById('interactive-grid-container').children[index];
+      if (cell) {
+        cell.className = targetState 
+          ? "grid-cell cursor-pointer bg-amber-400 border-2 border-slate-800 rounded-md transition-all shadow-sm transform scale-95"
+          : "grid-cell cursor-pointer bg-slate-100 border border-slate-300 rounded-md transition-all";
+      }
+      updatePaintStats();
+    }
+
+    function clearPaintGrid() {
+      paintGridState.fill(false);
+      Array.from(document.getElementById('interactive-grid-container').children).forEach(cell => {
+        cell.className = "grid-cell cursor-pointer bg-slate-100 border border-slate-300 rounded-md transition-all";
+      });
+      updatePaintStats();
+    }
+
+    function fillPaintGridAll() {
+      paintGridState.fill(true);
+      Array.from(document.getElementById('interactive-grid-container').children).forEach(cell => {
+        cell.className = "grid-cell cursor-pointer bg-amber-400 border-2 border-slate-800 rounded-md transition-all shadow-sm";
+      });
+      updatePaintStats();
+    }
+
+    function updatePaintStats() {
+      const count = paintGridState.filter(Boolean).length;
+      const dec = (count / paintGridTotal).toFixed(paintGridTotal === 10 ? 1 : 2);
+      document.getElementById('paint-stat-count').innerText = `${count} / ${paintGridTotal}`;
+      document.getElementById('paint-stat-decimal').innerText = dec;
+      
+      const fracEl = document.getElementById('paint-stat-fraction');
+      const simpEl = document.getElementById('paint-stat-simplified');
+
+      if (count === 0) {
+        fracEl.innerHTML = `<span class="text-2xl sm:text-3xl font-black text-sky-600 math-font">0</span>`;
+        simpEl.innerHTML = `<span class="text-2xl sm:text-3xl font-black text-emerald-600 math-font">0</span>`;
+      } else {
+        fracEl.innerHTML = getVerticalFractionHTML(count, paintGridTotal, 'text-xl sm:text-2xl text-sky-600 math-font');
+        const simp = simplifyFraction(count, paintGridTotal);
+        simpEl.innerHTML = simp.d === 1 
+          ? `<span class="text-2xl sm:text-3xl font-black text-emerald-600 math-font">${simp.n}</span>`
+          : getVerticalFractionHTML(simp.n, simp.d, 'text-xl sm:text-2xl text-emerald-600 math-font');
+      }
+    }
+
+    function simplifyFraction(n, d) {
+      if (n === 0) return { n: 0, d: 1 };
+      const gcd = (a, b) => b ? gcd(b, a % b) : a;
+      const common = gcd(n, d);
+      return { n: n / common, d: d / common };
+    }
+
+    function generateNewQuiz() {
+      const fb = document.getElementById('quiz-feedback');
+      fb.className = "hidden p-3 rounded-xl text-center font-bold text-xs sm:text-sm";
+
+      const useTen = Math.random() > 0.3;
+      const total = useTen ? 10 : 100;
+      const filled = Math.floor(Math.random() * (total - 1)) + 1;
+      const decimalVal = (filled / total).toFixed(useTen ? 1 : 2);
+      const fractionVal = `${filled}/${total}`;
+
+      renderSvgGrid('quiz-svg-display', total, filled, false);
+
+      const qType = Math.random() > 0.5 ? 0 : 1;
+      document.getElementById('quiz-question-text').innerText = qType === 0 
+        ? "請看圖：塗色部分代表的小數是多少？" 
+        : "請看圖：塗色部分代表的分數是多少？";
+
+      currentQuizAnswer = qType === 0 ? decimalVal : fractionVal;
+
+      const options = [currentQuizAnswer];
+      while (options.length < 4) {
+        let fakeFilled = Math.floor(Math.random() * (total - 1)) + 1;
+        if (fakeFilled === filled) continue;
+        let fakeVal = qType === 0 ? (fakeFilled / total).toFixed(useTen ? 1 : 2) : `${fakeFilled}/${total}`;
+        if (!options.includes(fakeVal)) options.push(fakeVal);
+      }
+      options.sort(() => Math.random() - 0.5);
+
+      const optsContainer = document.getElementById('quiz-options-container');
+      optsContainer.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "p-3 bg-white hover:bg-amber-100 border-2 border-slate-700 rounded-xl font-black text-lg sm:text-xl text-slate-800 shadow transition-transform active:scale-95 flex items-center justify-center min-h-[60px]";
+        btn.innerHTML = opt.includes('/') ? getVerticalFractionHTML(opt.split('/')[0], opt.split('/')[1], 'text-lg sm:text-xl') : opt;
+        btn.onclick = () => checkQuizAnswer(opt);
+        optsContainer.appendChild(btn);
+      });
+    }
+
+    function checkQuizAnswer(selected) {
+      const fb = document.getElementById('quiz-feedback');
+      fb.classList.remove('hidden');
+
+      if (selected === currentQuizAnswer) {
+        quizScore += 10;
+        document.getElementById('quiz-score').innerText = quizScore;
+        fb.className = "p-3 rounded-xl text-center font-bold text-xs sm:text-sm bg-emerald-100 text-emerald-800 border-2 border-emerald-400";
+        fb.innerHTML = `<i class="fa-solid fa-circle-check text-base mr-1"></i> 答對了！加 10 分 🎉`;
+        setTimeout(generateNewQuiz, 1400);
+      } else {
+        fb.className = "p-3 rounded-xl text-center font-bold text-xs sm:text-sm bg-rose-100 text-rose-800 border-2 border-rose-400";
+        const answerDisplay = currentQuizAnswer.includes('/') 
+          ? getVerticalFractionHTML(currentQuizAnswer.split('/')[0], currentQuizAnswer.split('/')[1], 'text-sm font-black') 
+          : `<span class="underline font-black text-sm">${currentQuizAnswer}</span>`;
+        fb.innerHTML = `<i class="fa-solid fa-circle-xmark text-base mr-1"></i> 答錯囉！正確答案是 ${answerDisplay}，再試一次吧！`;
+      }
+    }
+  </script>
+</body>
+</html>
